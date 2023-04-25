@@ -1,13 +1,11 @@
 // data to send: {"time":12299,"timestamp":"11-28-2022","score":19754,"stars_collected":2,"track":"1","_id":123456}
 
-
 // The preload function is used to load in all the fonts and images. I assign each one to a global variable so I can use it anywhere in the code. Because they are all loaded in the beginning, the user never waits for images to load. After the preload function is complete, the setup() function starts
 function preload() 
 {
     spaceFont = loadFont('/public/fonts/Anurati.otf');
     fontRegular = loadFont('/public/fonts/Helvetica.ttf');
 
-    
     backgroundImage = loadImage('/public/images/background1.png'); // this image is the background while in "play" mode
     homeTrack = loadImage('/public/images/homeTrack.png'); // this is the track that appears on the home screen
     blueprint = loadImage('/public/images/blueprint2.png'); // this image is the background while in "build" mode
@@ -682,6 +680,7 @@ function getUserData()
     {
         
         newDevice();
+        console.log("New device");
 
         
         
@@ -692,6 +691,7 @@ function getUserData()
         let stars = JSON.parse(getItem("userStars"))
  
         totalStars = 0;
+        console.log("old device");
 
         stars.forEach(stars =>
         {
@@ -704,7 +704,6 @@ function updateScore(levelGroup, level)
 {
 
 }
-
 
 
 function compareValues(key, order = 'asc') 
@@ -736,34 +735,49 @@ function compareValues(key, order = 'asc')
 
 // all requests from this device
 
-function updateUsernameOnServer() 
+async function createUsernameOnServer() 
 { 
-    
-    if (getItem("userName") != null && getItem("userName") != "")
+    if (getItem("userName") != null)
     {
-        console.log("updated username on server");
-        $.ajax({
-            type: "GET",
-            url: "http://localhost:5000/createStudent",
-            data: {
-                username: localStorage.userName,
-                classCode: "123"
-            }, 
-            success: function(msg){
-                if (msg == "studentAlreadyExists")
-                {
-                    showPopUp("student already exists");
-                }
-                else
-                {
-                    // console.log(msg);
-                    storeItem("userID", msg)
-                    console.log("user Id is:", getItem("userID"));
-                }
-                
-            }
-        });
+        let newDeviceLink = 'http://localhost:8080/newDevice?username=' + getItem("userName")
+        let response = await fetch(newDeviceLink);
+        let responseJSON = await response.text()
+
+        console.log("response: ", responseJSON.insertId);
+        
+        storeItem("userID", JSON.parse(responseJSON).insertId);
     }
+    else
+    {
+        console.log("Username isnt null")
+    }
+
+    // if (getItem("userName") != null && getItem("userName") != "")
+    // {
+    //     console.log("updated username on server");
+    //     $.ajax({
+    //         type: "GET",
+    //         url: "http://localhost:8080/newDevice",
+    //         data: {
+    //             username: localStorage.userName,
+    //             classCode: "000"
+    //         }, 
+    //         success: function(msg){
+    //             // if (msg == "studentAlreadyExists")
+    //             // {
+    //             //     showPopUp("student already exists");
+    //             // }
+    //             // else
+    //             // {
+    //             //     // console.log(msg);
+    //             //     storeItem("userID", msg)
+    //             //     console.log("user Id is:", getItem("userID"));
+    //             // }
+    //             console.log(msg);
+                
+    //         }
+    //     });
+    // }
 }
 
 function updateClassCodeOnServer()
@@ -800,7 +814,8 @@ function makeid(length) {
     var result           = '';
     var characters       = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
     var charactersLength = characters.length;
-    for ( var i = 0; i < length; i++ ) {
+    for ( var i = 0; i < length; i++ ) 
+    {
         result += characters.charAt(Math.floor(Math.random() * charactersLength));
     }
     return result;
@@ -1000,7 +1015,7 @@ function getDate()
 
 function newDevice()
 {
-    // updateUsernameOnServer();
+    createUsernameOnServer();
 
     let userScores = [];
     let userStars = [];
