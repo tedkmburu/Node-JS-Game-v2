@@ -27,23 +27,37 @@ db.connect((err) => {
 
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname+'/game.html'));
+
+  // res.status(404).sendFile('/absolute/path/to/404.png')
+})
+
+
+
+
+
+app.get('/dashboard', (req, res) => {
+  res.sendFile(path.join(__dirname+'/public/bootstrap/dashboard.html'));
 })
 
 app.get('/leaderboardData', (req, res) => {
-
   let sql = "SELECT * from student_scores ORDER BY score DESC LIMIT 20";
-
   sql = "SELECT * from student_scores LEFT JOIN students ON student_scores. studentId = students.id ORDER BY score DESC"
-
+  
   db.query(sql, (err, result) => {
     if (err) throw err 
     res.send(result);
   });
-    
-  // });
+})
 
-  // res.send(getScores());
-  // res.end(); 
+app.get('/newDevice', (req, res) => {
+
+  const search_params = new URL("http://" + req.url).searchParams;
+  // let sendDataLink = `http://localhost:8080/newDevice?username=asdfasdfasdf3`
+  let username = search_params.get('username');
+  let sql =  "INSERT INTO students VALUES (0 ,'" + username +  "')";
+  db.query(sql, (err, result) => { 
+    if (err) throw err
+    res.send(result)});
 })
 
 app.get('/sendData/', (req, res) => {
@@ -76,13 +90,25 @@ app.get('/populateDB', (req, res) => {
 
   clearTable('student_scores')
   clearTable('students')
+  clearTable('teachers')
   
   // generate random data
   let scoreToInsert = JSON.parse(getScores())
 
   // create random students
-  scoreToInsert.forEach(score => {
-    let sql = "INSERT INTO students (username) VALUES ('" + score.name + "')";
+  scoreToInsert.forEach((score, i) => {
+    let sql = "INSERT INTO students (id, username, classCode) VALUES (" + i +", '" + score.name + "', '000')";
+    db.query(sql, (err) => { if (err) throw err });
+  })
+
+  teachersToCreate = JSON.parse(getScores())
+
+  // create random students
+  teachersToCreate.forEach((teacher, i) => {
+    // let sql = "INSERT INTO student_scores (studentId, score, track, starsCollected, timeToComplete, timeStamp) VALUES (" + student.id + ", " + scoreToInsert[i].score + ", 1, " + scoreToInsert[i].starsCollected + ", " + scoreToInsert[i].time + ", '" +  currentTime + "')";
+    let emailAddress = teacher.firstName + teacher.lastName + Math.round(Math.random() * 999) + "@ithaca.edu";
+
+    let sql = "INSERT INTO teachers (id, firstName, lastName, email, passwordHash, courses) VALUES (" + i + ",'" + teacher.firstName + "', '" + teacher.lastName + "', '" + emailAddress.toString() + "', 'qwerty123', '[]')";
     db.query(sql, (err) => { if (err) throw err });
   })
 
